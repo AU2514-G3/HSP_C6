@@ -75,3 +75,11 @@ void hsp_cat9555_ledbar(uint16_t value)
     buffer_write[1] = ~((value>>8) & 0xFFU);
     hsp_i2c_write_2byte(buffer_write, write_address);
 }
+
+void clear_led_bar() {
+    uint8_t write_address = 0x02U; // 假定这是控制LED光柱的I2C地址
+    uint8_t buffer_write[2] = {0xFF, 0xFF}; // 将所有LED设置为关闭状态
+
+    // 发送I2C命令以关闭所有LED
+    hsp_i2c_write_2byte(buffer_write, write_address);
+}

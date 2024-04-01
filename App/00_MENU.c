@@ -195,7 +195,7 @@ uint8_t hsp_menu_loop(void)
         if ((!PUSH()) || (!S3()))    // push button pressed        
         {
             delay_1ms(50);  // de-jitter
-            if ((!PUSH()) || (!S3()))
+            if ((!PUSH()) || (!S3())) 
             {
                 while(!PUSH());
                 return ItemNumber;

@@ -93,7 +93,7 @@ int main(void)
     while(1) {
 		// organize exercises, labs and project properly into a menu 
 		menu_id = hsp_menu_loop();
-		
+
 		switch(menu_id)
 		{
 			case 0U:		// 1.Welcome HSP

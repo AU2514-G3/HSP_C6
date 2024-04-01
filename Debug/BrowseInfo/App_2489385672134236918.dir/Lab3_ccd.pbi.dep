@@ -56,4 +56,6 @@ D:\Files\SJTU\second_second\engineering4-D\HSP_C6\HSP\Debug\BrowseInfo\App_24893
   D:\Files\SJTU\second_second\engineering4-D\HSP_C6\HSP\Board\hsp_uart.h \
   D:\Files\SJTU\second_second\engineering4-D\HSP_C6\HSP\Board\hsp_timer.h \
   D:\Files\SJTU\second_second\engineering4-D\HSP_C6\HSP\Utilities\HSP_TFT18.h \
-  D:\Files\SJTU\second_second\engineering4-D\HSP_C6\HSP\Utilities\HSP_MOTOR.h
+  D:\Files\SJTU\second_second\engineering4-D\HSP_C6\HSP\Utilities\HSP_MOTOR.h \
+  D:\Files\SJTU\second_second\engineering4-D\HSP_C6\HSP\Utilities\HSP_CAT9555.h \
+  D:\Files\SJTU\second_second\engineering4-D\HSP_C6\HSP\Board\hsp_i2c.h

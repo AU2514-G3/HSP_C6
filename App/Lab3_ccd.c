@@ -4,6 +4,12 @@
 
 #include "HSP_TSL1401.h"
 #include "Lab3.h"
+#include "HSP_CAT9555.h"
+
+#define CCD_PIXELS 128
+#define THRESHOLD 30
+#define MIN_WIDTH 5
+#define FILTER_WINDOW 2  // 2点移动平均滤波窗口
 
 ccd_t ccd_data_raw, ccd_data_old;
 uint8_t CCD2PC[260];	// data to be sent to PC using seekfree protocol
@@ -12,6 +18,52 @@ uint8_t max_v_index, min_v_index;	// array index of the max/min_v
 int16_t max_dv, min_dv;				// max/min value of the linear array delta
 uint8_t max_dv_index, min_dv_index;	// array index of the max/min_dv
 int16_t delta_v[124];				// delta v of the linear array
+
+// 信号预处理和差分
+void preprocess_signal(int16_t* ccd_data, int16_t* filtered_data, int16_t* diff_signal) {
+    // 简单的移动平均滤波
+    for (int i = FILTER_WINDOW/2; i < CCD_PIXELS - FILTER_WINDOW/2; ++i) {
+        int16_t sum = 0;
+        for (int j = -FILTER_WINDOW/2; j <= FILTER_WINDOW/2; ++j) {
+            sum += ccd_data[i + j];
+        }
+        filtered_data[i] = sum / FILTER_WINDOW;
+    }
+
+// 计算差分信号
+	for (int i = 1; i < CCD_PIXELS - 1; ++i) {
+		diff_signal[i - 1] = filtered_data[i + 1] - filtered_data[i - 1];
+	}
+}
+
+
+// 检测黑线位置
+int detect_line_position(int16_t* diff_signal) {
+    int start = -1;
+    int end = -1;
+    int max_peak = 0;
+    int line_position = -1;
+
+    for (int i = 2; i < CCD_PIXELS - 2; ++i) {
+        if (diff_signal[i] > THRESHOLD && diff_signal[i] > max_peak) {
+            // 检测到新的正峰，更新最大峰值
+            max_peak = diff_signal[i];
+            start = i;
+        } else if (diff_signal[i] < -THRESHOLD) {
+            // 检测到负峰，检查是否为同一黑线
+            if (i - start >= MIN_WIDTH) {
+                end = i;
+                line_position = (start + end) / 2; // 返回黑线中心位置
+            }
+            // 重置起始位置和最大峰值
+            start = -1;
+            max_peak = 0;
+        }
+    }
+    return line_position;
+}
+
+
 
 void Lab3_test(void)
 {
@@ -33,7 +85,19 @@ void Lab3_test(void)
 	while(1)
 	{
 		hsp_ccd_snapshot(ccd_data_raw);
-		hsp_ccd_show(ccd_data_raw);
+
+		//calculate line position
+
+		// 信号预处理和差分
+		int16_t filtered_data[CCD_PIXELS];
+		int16_t diff_signal[CCD_PIXELS - 2];
+		preprocess_signal(ccd_data_raw, filtered_data, diff_signal);
+
+		// 检测黑线位置
+		int line_position = detect_line_position(diff_signal);
+
+		// 显示CCD波形和黑线位置
+		hsp_ccd_show(ccd_data_raw, line_position);
 		
 		min_v = 4095U;
 		max_v = 0U;
@@ -139,7 +203,7 @@ void Lab3_seekfree(void)
 	while(1)
 	{
 		hsp_ccd_snapshot(ccd_data_raw);
-		hsp_ccd_show(ccd_data_raw);
+		// hsp_ccd_show(ccd_data_raw);
 
 		if (!PUSH())		// PUSHed?
 		{
@@ -154,10 +218,12 @@ void Lab3_seekfree(void)
 	}
 }
 
+static int prev_line_position = -1;
 // draw LinearCCD waveform by pixels: [32,128] ~ [160,64]
-void hsp_ccd_show(ccd_t data)
+void hsp_ccd_show(ccd_t data,int line_position)
 {
     uint8_t i=0;
+	int led_position = line_position * 16 / CCDPIXEL; // 将黑线位置映射到16位LED光柱上
 
     for(i=0; i<CCDPIXEL; i++)
 	{
@@ -165,7 +231,29 @@ void hsp_ccd_show(ccd_t data)
         hsp_tft18_draw_pixel(32+i, 128-(data[i]>>6), BLUE);			// data/64 : 0~4095 -> 0~64
         ccd_data_old[i] = data[i];
 	}
+
+	// 如果黑线位置有效，则在LCD上显示red line，并更新LED光柱状态
+	if (line_position >= 0) {
+		// clear previous line
+		hsp_tft18_draw_line_v(32+prev_line_position, 128-64, 64, GRAY1);
+		// 绘制垂直线段
+		hsp_tft18_draw_line_v(32 + line_position, 128 - 64, 64, RED);
+
+		prev_line_position = line_position;
+		// 映射黑线位置到16位LED光柱的范围
+		int led_position = line_position * 16 / CCD_PIXELS; // 将128点映射到16位LED
+		uint16_t led_to_light = (1 << led_position); 
+		hsp_cat9555_ledbar(led_to_light);
+	}
+	else {
+		// 如果没有检测到黑线，可以选择熄灭所有LED，或者采取其他适当的提示方式
+		hsp_cat9555_ledbar(0); // 熄灭所有LED
+	}
+
+
+
 }
+
 
 void hsp_demo_frame_ccd(void)
 {

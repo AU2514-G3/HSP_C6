@@ -12,7 +12,7 @@
 
 void Lab3_test(void);
 void Lab3_seekfree(void);
-void hsp_ccd_show(ccd_t data);
+void hsp_ccd_show(ccd_t data,int line_position);
 void hsp_demo_frame_ccd(void);
 
 #endif

@@ -3,6 +3,9 @@
         "ex7.h": "c",
         "hsp_timer.h": "c",
         "lab1.h": "c",
-        "hsp_gpio.h": "c"
+        "hsp_gpio.h": "c",
+        "lab3.h": "c",
+        "hsp_tsl1401.h": "c",
+        "hsp_cat9555.h": "c"
     }
 }
