@@ -10,7 +10,7 @@
 #define CH4_LOWER_LIMIT	520U
 #define CH4_UPPER_LIMIT	2520U
 // adjust the limit value as needed
-#define MOTOR_DC_LIMIT	95
+#define MOTOR_DC_LIMIT	40
 
 // pulse_width: value in unit of millisecond
 // pulse_width maximum range: 520 ~ 2520

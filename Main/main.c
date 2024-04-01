@@ -92,6 +92,18 @@ int main(void)
 	
     while(1) {
 		// organize exercises, labs and project properly into a menu 
+		if (!(sys_tick_counter % 20))
+		{
+			sys_tick_counter = 0;
+			// LED_R_TOGGLE();
+			i = timer_counter_read(TIMER3);
+			i++;
+			i |= 0b00000001;
+			//hsp_tft18_show_uint16_color(0, 1, i, WHITE, BLACK);
+			printf("counter value: %d\n\r", i);
+		}
+
+
 		menu_id = hsp_menu_loop();
 
 		switch(menu_id)
@@ -109,7 +121,9 @@ int main(void)
 				Lab3_test();
 				break;
 			case 4U:		// 5.Lab4: Motor and R/C servo
-				Ex6_2_servo_manual();
+				// Ex6_2_servo_manual();
+				Ex6_3_motor_manual();
+
 				break;
 			case 5U:		// 6.Project: Line Following Robot
 				Project_LFR();
@@ -172,13 +186,13 @@ int main(void)
 //			hsp_rtc_demo();
 //			//Ex8_1_rtc();
 //			hsp_demo_hmi();
-//		if (!(sys_tick_counter % 20))
-//		{
-//			sys_tick_counter = 0;
-//			LED_R_TOGGLE();
-//			//i = timer_counter_read(TIMER3);
-//			i++;
-//			i |= 0b00000001;
-//			//hsp_tft18_show_uint16_color(0, 1, i, WHITE, BLACK);
-//			printf("counter value: %d\n\r", i);
-//		}
+		// if (!(sys_tick_counter % 20))
+		// {
+		// 	sys_tick_counter = 0;
+		// 	LED_R_TOGGLE();
+		// 	//i = timer_counter_read(TIMER3);
+		// 	i++;
+		// 	i |= 0b00000001;
+		// 	//hsp_tft18_show_uint16_color(0, 1, i, WHITE, BLACK);
+		// 	printf("counter value: %d\n\r", i);
+		// }

@@ -172,8 +172,8 @@ void Ex6_3_motor_manual(void)
 		hsp_tft18_show_int16(8, 0, dc);
 		
         // PWM output stage, subjected to duty cycle limits
-		if(80 < dc)
-			dc = 80;
+		if(40 < dc)
+			dc = 40;
 		if(SW1())
 		{
 			hsp_motor_voltage(MOTORF, dc);		// run forward

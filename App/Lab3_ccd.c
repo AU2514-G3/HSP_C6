@@ -5,8 +5,12 @@
 #include "HSP_TSL1401.h"
 #include "Lab3.h"
 #include "HSP_CAT9555.h"
+#include<stdbool.h>
 
 #define CCD_PIXELS 128
+
+//led state
+int led_state = 0;
 
 ccd_t ccd_data_raw, ccd_data_old;
 uint8_t CCD2PC[260];	// data to be sent to PC using seekfree protocol
@@ -15,7 +19,9 @@ uint8_t max_v_index, min_v_index;	// array index of the max/min_v
 int16_t max_dv, min_dv;				// max/min value of the linear array delta
 uint8_t max_dv_index, min_dv_index;	// array index of the max/min_dv
 int16_t delta_v[124];				// delta v of the linear array
+extern volatile uint32_t sys_tick_counter;
 
+void line_position_alert(int line_position);
 
 void Lab3_test(void)
 {
@@ -80,10 +86,13 @@ void Lab3_test(void)
 		hsp_tft18_show_int8(0, 2, min_dv_index);
 		hsp_tft18_show_int8(0, 3, max_dv_index);
 
+		int actual_max_dv_index = max_dv_index + 2; 
+		int actual_min_dv_index = min_dv_index + 2;
 		//检测黑线位置
-		int line_position = (min_dv_index + max_dv_index) / 2;
+		int line_position = (actual_max_dv_index + actual_min_dv_index) / 2;
 		hsp_ccd_show(ccd_data_raw, line_position);
-
+		// line_position_alert(line_position);
+		line_position_alert(10);
 
 		// calculate the steering angle command, pulse width in unit of us
 		pw = 1500  - (min_dv_index + max_dv_index - 124) * 5; //*5是为了增大灵敏度
@@ -208,4 +217,85 @@ void hsp_demo_frame_ccd(void)
     // window for TSL1401 waveform
     hsp_tft18_draw_frame(31, 64, 128, 64, BLUE);
     hsp_tft18_draw_block(32, 65, 128, 63, GRAY1);
+}
+
+
+// 蜂鸣器鸣叫函数
+void beeper_beep(uint32_t duration_ms) {
+    // 控制蜂鸣器鸣叫指定的毫秒数
+	BUZZ_ON();
+	delay_1ms(duration_ms);
+	BUZZ_OFF();
+
+}
+
+// LED闪烁函数
+void led_blink(uint32_t duration_ms) {
+	// 控制LED闪烁指定的毫秒数 RGB交替闪烁
+
+	if (led_state%3==0) //blue on
+	{
+		LED_B_ON(); 
+		LED_R_OFF();
+		LED_G_OFF();
+	}
+	else if (led_state%3==1) //red on
+	{
+		LED_B_OFF();
+		LED_R_ON();
+		LED_G_OFF();
+	}
+	else //green on
+	{
+		LED_B_OFF();
+		LED_R_OFF();
+		LED_G_ON();
+		led_state = 0;
+	}
+	delay_1ms(duration_ms);
+	led_state++;
+
+}
+
+
+void line_position_alert(int line_position) {
+    uint32_t current_time = sys_tick_counter;
+	static uint32_t last_blink_time = 0;
+	
+    // 判断SW1的状态，选择蜂鸣器或LED1指示
+    bool use_beeper = !SW1();
+	// bool use_beeper = 0; //led 供调试使用
+
+    if (line_position < 0|| line_position >= CCD_PIXELS) {
+        // 未检测到黑线
+        if (current_time - last_blink_time > 1000) { // 超过1秒未检测到
+            if (use_beeper) {
+                beeper_beep(1000); // 蜂鸣器长鸣
+            } else {
+                led_blink(1000); // LED长亮
+            }
+
+        } else if (current_time - last_blink_time > 100) {
+            if (use_beeper) {
+                beeper_beep(100); // 蜂鸣器短鸣
+            } else {
+                led_blink(100); // LED短亮
+            } 
+        }
+		// last_blink_time = current_time;
+    } else if (line_position < 20 || line_position > 108) {
+        // 黑线位置偏离中心
+        if (current_time - last_blink_time > 200) {
+            if (use_beeper) {
+                beeper_beep(200); // 蜂鸣器短鸣
+            } else {
+                led_blink(200); // LED短亮
+            }
+            last_blink_time = current_time;
+        }
+    } else {
+        // 黑线位置正常，不做操作
+		LED1_OFF();
+		BUZZ_OFF();
+    }
 }

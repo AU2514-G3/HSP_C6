@@ -6,6 +6,8 @@
         "hsp_gpio.h": "c",
         "lab3.h": "c",
         "hsp_tsl1401.h": "c",
-        "hsp_cat9555.h": "c"
+        "hsp_cat9555.h": "c",
+        "gd32f4xx.h": "c",
+        "stdint.h": "c"
     }
 }
