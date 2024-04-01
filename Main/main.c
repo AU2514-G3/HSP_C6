@@ -109,7 +109,7 @@ int main(void)
 				Lab3_test();
 				break;
 			case 4U:		// 5.Lab4: Motor and R/C servo
-				// todo
+				Ex6_2_servo_manual();
 				break;
 			case 5U:		// 6.Project: Line Following Robot
 				Project_LFR();

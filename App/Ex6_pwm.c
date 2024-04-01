@@ -93,10 +93,10 @@ void Ex6_2_servo_manual(void)
 		hsp_tft18_show_int16(8, 0, pw);
 		
         // PWM output stage, subjected to steering angle limits
-		if(2050 < pw)
-			pw = 2050;
-		if(1100 > pw)
-			pw = 1100;
+		if(4000 < pw)
+			pw = 4000;
+		if(500 > pw)
+			pw = 500;
 		if(pwt != pw)
 		{
 			hsp_servo_angle(SERVO1, pw);

@@ -7,9 +7,6 @@
 #include "HSP_CAT9555.h"
 
 #define CCD_PIXELS 128
-#define THRESHOLD 30
-#define MIN_WIDTH 5
-#define FILTER_WINDOW 2  // 2点移动平均滤波窗口
 
 ccd_t ccd_data_raw, ccd_data_old;
 uint8_t CCD2PC[260];	// data to be sent to PC using seekfree protocol
@@ -18,51 +15,6 @@ uint8_t max_v_index, min_v_index;	// array index of the max/min_v
 int16_t max_dv, min_dv;				// max/min value of the linear array delta
 uint8_t max_dv_index, min_dv_index;	// array index of the max/min_dv
 int16_t delta_v[124];				// delta v of the linear array
-
-// 信号预处理和差分
-void preprocess_signal(int16_t* ccd_data, int16_t* filtered_data, int16_t* diff_signal) {
-    // 简单的移动平均滤波
-    for (int i = FILTER_WINDOW/2; i < CCD_PIXELS - FILTER_WINDOW/2; ++i) {
-        int16_t sum = 0;
-        for (int j = -FILTER_WINDOW/2; j <= FILTER_WINDOW/2; ++j) {
-            sum += ccd_data[i + j];
-        }
-        filtered_data[i] = sum / FILTER_WINDOW;
-    }
-
-// 计算差分信号
-	for (int i = 1; i < CCD_PIXELS - 1; ++i) {
-		diff_signal[i - 1] = filtered_data[i + 1] - filtered_data[i - 1];
-	}
-}
-
-
-// 检测黑线位置
-int detect_line_position(int16_t* diff_signal) {
-    int start = -1;
-    int end = -1;
-    int max_peak = 0;
-    int line_position = -1;
-
-    for (int i = 2; i < CCD_PIXELS - 2; ++i) {
-        if (diff_signal[i] > THRESHOLD && diff_signal[i] > max_peak) {
-            // 检测到新的正峰，更新最大峰值
-            max_peak = diff_signal[i];
-            start = i;
-        } else if (diff_signal[i] < -THRESHOLD) {
-            // 检测到负峰，检查是否为同一黑线
-            if (i - start >= MIN_WIDTH) {
-                end = i;
-                line_position = (start + end) / 2; // 返回黑线中心位置
-            }
-            // 重置起始位置和最大峰值
-            start = -1;
-            max_peak = 0;
-        }
-    }
-    return line_position;
-}
-
 
 
 void Lab3_test(void)
@@ -85,19 +37,6 @@ void Lab3_test(void)
 	while(1)
 	{
 		hsp_ccd_snapshot(ccd_data_raw);
-
-		//calculate line position
-
-		// 信号预处理和差分
-		int16_t filtered_data[CCD_PIXELS];
-		int16_t diff_signal[CCD_PIXELS - 2];
-		preprocess_signal(ccd_data_raw, filtered_data, diff_signal);
-
-		// 检测黑线位置
-		int line_position = detect_line_position(diff_signal);
-
-		// 显示CCD波形和黑线位置
-		hsp_ccd_show(ccd_data_raw, line_position);
 		
 		min_v = 4095U;
 		max_v = 0U;
@@ -140,6 +79,11 @@ void Lab3_test(void)
 
 		hsp_tft18_show_int8(0, 2, min_dv_index);
 		hsp_tft18_show_int8(0, 3, max_dv_index);
+
+		//检测黑线位置
+		int line_position = (min_dv_index + max_dv_index) / 2;
+		hsp_ccd_show(ccd_data_raw, line_position);
+
 
 		// calculate the steering angle command, pulse width in unit of us
 		pw = 1500  - (min_dv_index + max_dv_index - 124) * 5; //*5是为了增大灵敏度
