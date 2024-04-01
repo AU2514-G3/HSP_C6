@@ -91,8 +91,8 @@ void Lab3_test(void)
 		//检测黑线位置
 		int line_position = (actual_max_dv_index + actual_min_dv_index) / 2;
 		hsp_ccd_show(ccd_data_raw, line_position);
-		// line_position_alert(line_position);
-		line_position_alert(10);
+		line_position_alert(line_position);
+		// line_position_alert(10);
 
 		// calculate the steering angle command, pulse width in unit of us
 		pw = 1500  - (min_dv_index + max_dv_index - 124) * 5; //*5是为了增大灵敏度
